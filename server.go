@@ -7,6 +7,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+
 	"github.com/TakakiAraki/graphql-antict-example/graph"
 	"github.com/TakakiAraki/graphql-antict-example/internal"
 )
