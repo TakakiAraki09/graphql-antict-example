@@ -43,7 +43,6 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
-	IsAuthenticated func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
 }
 
 type ComplexityRoot struct {
@@ -861,7 +860,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "../schema.graphqls", Input: `directive @isAuthenticated on FIELD_DEFINITION
+	{Name: "../schema.graphqls", Input: `# directive @isAuthenticated on FIELD_DEFINITION
 
 scalar DateTime
 
@@ -883,18 +882,9 @@ type Repository implements Node {
   owner: User!
   name: String!
   createdAt: DateTime!
-  issue(
-    number: Int!
-  ): Issue
-  issues(
-    after: String
-    before: String
-    first: Int
-    last: Int
-  ): IssueConnection!
-  pullRequest(
-    number: Int!
-  ): PullRequest
+  issue(number: Int!): Issue
+  issues(after: String, before: String, first: Int, last: Int): IssueConnection!
+  pullRequest(number: Int!): PullRequest
   pullRequests(
     after: String
     before: String
@@ -906,9 +896,7 @@ type Repository implements Node {
 type User implements Node {
   id: ID!
   name: String!
-  projectV2(
-    number: Int!
-  ): ProjectV2
+  projectV2(number: Int!): ProjectV2
   projectV2s(
     after: String
     before: String
@@ -1020,19 +1008,11 @@ type ProjectV2ItemEdge {
 }
 
 type Query {
-  repository(
-    name: String!
-    owner: String!
-  ): Repository
+  repository(name: String!, owner: String!): Repository
 
-  user(
-    name: String!
-  ): User @isAuthenticated
+  user(name: String!): User
 
-  node(
-    id: ID!
-  ): Node
-
+  node(id: ID!): Node
 }
 
 input AddProjectV2ItemByIdInput {
@@ -4264,28 +4244,8 @@ func (ec *executionContext) _Query_user(ctx context.Context, field graphql.Colle
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().User(rctx, fc.Args["name"].(string))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.IsAuthenticated == nil {
-				return nil, errors.New("directive isAuthenticated is not implemented")
-			}
-			return ec.directives.IsAuthenticated(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(*model.User); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/TakakiAraki/graphql-antict-example/graph/model.User`, tmp)
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().User(rctx, fc.Args["name"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
